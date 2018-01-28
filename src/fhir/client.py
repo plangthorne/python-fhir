@@ -9,7 +9,7 @@ import requests
 
 
 ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
-ENDPOINT = '/Patient/$everything'
+COMMAND = '/$export'
 GRANT_TYPE = 'client_credentials'
 HEADERS = {
     'Accept': 'application/fhir+ndjson',
@@ -25,8 +25,7 @@ VALID_QUERY_PARAMS = [
 
 
 def parse_manifest(response):
-    # The spec is evolving w/r/t the manifest data structure
-    return [_.get('url') for _ in response.json().get('output')]
+    return [_.get('url') for _ in response.json()['output']]
 
 class BulkDataAuth(requests.auth.AuthBase):
 
@@ -98,22 +97,23 @@ class BulkDataClient(object):
         response = self.session.get(url, params=params, timeout=60)
         try:
             response.raise_for_status()
-        except (requests.HTTPError, requests.Timeout) as exc:
+        except requests.HTTPError as exc:
             if response.status_code == 401:
                 self.session.auth.token = None
-                self.issue(url, **params)      # if credentials are bad
-                                               # recursion will stop at token
-                                               # endpoint
+                response = self.issue(url, **params)    # if credentials are bad
+                                                        # recursion will stop at
+                                                        # token endpoint
             else:
                 raise exc
         return response
 
-    def provision(self, **query_params):
+    def provision(self, group_id=None, **query_params):
         params = {
             k:v for (k, v) in query_params.items()
             if k in VALID_QUERY_PARAMS
         }
-        response = self.issue(self.server+ENDPOINT, **params)
+        endpoint = '/Group/%s' % group_id if group_id else '/Patient'
+        response = self.issue(self.server+endpoint+COMMAND, **params)
         content = response.headers.get('Content-Location')
         while True:
             sleep(0.5)
