@@ -18,10 +18,9 @@ HEADERS = {
 SCOPE = 'system/*.*'
 
 VALID_QUERY_PARAMS = [
-    'start',
+    '_outputFormat',
+    '_since',
     '_type',
-    '_include',
-    'output-format',
 ]
 
 
