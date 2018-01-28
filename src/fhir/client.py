@@ -1,6 +1,5 @@
 import datetime
 import json
-import re
 
 from time import sleep
 from uuid import uuid4
@@ -27,12 +26,8 @@ VALID_QUERY_PARAMS = [
 
 
 def parse_manifest(response):
-    locations = []
-    for url in response.headers.get('Link').split(','):
-        match = re.search(r'<(.*)>', url)
-        if match:
-            locations.append(match.group(1))
-    return locations
+    # The spec is evolving w/r/t the manifest data structure
+    return [_.get('url') for _ in response.json().get('output')]
 
 class BulkDataAuth(requests.auth.AuthBase):
 
@@ -59,11 +54,14 @@ class BulkDataAuth(requests.auth.AuthBase):
                     'jti': uuid4().hex,
                 }, self.private_key, algorithm='RS256'),
             }
-            response = requests.post(self.auth_location, data=payload)
-            if response.ok:
-                self.token = response.json().get('access_token')
-        if self.token:
-            request.headers['Authorization'] = 'Bearer %s' % self.token
+            response = requests.post(
+                self.auth_location,
+                data=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            self.token = response.json()['access_token']
+        request.headers['Authorization'] = 'Bearer %s' % self.token
         return request
 
 class BulkDataClient(object):
@@ -104,7 +102,9 @@ class BulkDataClient(object):
         except (requests.HTTPError, requests.Timeout) as exc:
             if response.status_code == 401:
                 self.session.auth.token = None
-                self.issue(url, params=params)
+                self.issue(url, params=params)      # if credentials are bad
+                                                    # recursion will stop at
+                                                    # token endpoint
             else:
                 raise exc
         return response
