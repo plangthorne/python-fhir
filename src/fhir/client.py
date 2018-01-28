@@ -102,9 +102,9 @@ class BulkDataClient(object):
         except (requests.HTTPError, requests.Timeout) as exc:
             if response.status_code == 401:
                 self.session.auth.token = None
-                self.issue(url, params=params)      # if credentials are bad
-                                                    # recursion will stop at
-                                                    # token endpoint
+                self.issue(url, **params)      # if credentials are bad
+                                               # recursion will stop at token
+                                               # endpoint
             else:
                 raise exc
         return response
