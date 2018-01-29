@@ -9,7 +9,7 @@ import requests
 
 
 ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
-COMMAND = '/$export'
+COMMAND = '/$everything'
 GRANT_TYPE = 'client_credentials'
 HEADERS = {
     'Accept': 'application/fhir+ndjson',
