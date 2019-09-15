@@ -8,8 +8,10 @@ setup(
     namespace_packages=['fhir'],
     include_package_data=True,
     install_requires=[
+        'backoff>=1.8,<2',
+        'jmespath>=0.9,<1',
         'pyjwt>=1.5.3,<2',
-        'pyyaml>=3.12,<4',
+        'pyyaml>=4.2b1,<5',
         'requests>=2.18,<3',
     ],
 )
